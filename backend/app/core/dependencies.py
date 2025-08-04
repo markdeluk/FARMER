@@ -4,13 +4,6 @@ from app.db.session import SessionLocal
 from app.core.auth import get_current_active_user, require_role
 from app.models.user import User
 
-def get_db() -> Session:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
 # Re-export delle dipendenze di autenticazione comuni
 def get_current_user(current_user: User = Depends(get_current_active_user)) -> User:
     """Ottieni l'utente corrente attivo"""
