@@ -1,16 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-
-export interface User {
-  id: number
-  email: string
-  first_name: string
-  last_name: string
-  phone: string
-  is_active: boolean
-  role_name: string
-  profile_picture?: string | null
-}
+import type { User, AuthToken, LoginCredentials } from '../lib/types'
 
 interface AuthContextType {
   user: User | null

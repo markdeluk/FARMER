@@ -88,7 +88,9 @@ def register(
         last_name=new_user.last_name,
         phone=new_user.phone,
         is_active=new_user.is_active,
+        role_id=new_user.role_type_id,
         role_name=new_user.role_type.name,
+        role_description=new_user.role_type.description,
         profile_picture=new_user.profile_picture
     )
 
@@ -120,7 +122,7 @@ def login(
     ```
     """
     user = authenticate_user(db, user_credentials.email, user_credentials.password)
-    if not user:
+    if not user or not isinstance(user, User):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -144,7 +146,10 @@ def login(
             last_name=user.last_name,
             phone=user.phone,
             is_active=user.is_active,
-            role_name=user.role.name
+            role_id=user.role_type_id,
+            role_name=user.role_type.name,
+            role_description=user.role_type.description,
+            profile_picture=user.profile_picture
         )
     )
 
@@ -160,7 +165,10 @@ def get_current_user_info(
         last_name=current_user.last_name,
         phone=current_user.phone,
         is_active=current_user.is_active,
-        role_name=current_user.role.name
+        role_id=current_user.role_type_id,
+        role_name=current_user.role_type.name,
+        role_description=current_user.role_type.description,
+        profile_picture=current_user.profile_picture
     )
 
 @router.post("/refresh", response_model=Token)
@@ -184,7 +192,10 @@ def refresh_token(
             last_name=current_user.last_name,
             phone=current_user.phone,
             is_active=current_user.is_active,
-            role_name=current_user.role.name
+            role_id=current_user.role_type_id,
+            role_name=current_user.role_type.name,
+            role_description=current_user.role_type.description,
+            profile_picture=current_user.profile_picture
         )
     )
 

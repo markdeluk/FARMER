@@ -87,9 +87,6 @@ export function LoginForm({
                 <Button type="submit" className="w-full" disabled={isLoading}>
                   {isLoading ? "Logging in..." : "Login"}
                 </Button>
-                <Button variant="outline" className="w-full" type="button" disabled={isLoading}>
-                  Login with Google
-                </Button>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
@@ -97,11 +94,6 @@ export function LoginForm({
               <a href="#" className="underline underline-offset-4">
                 Sign up
               </a>
-            </div>
-            <div className="mt-4 p-3 bg-gray-50 rounded-md text-xs text-gray-600">
-              <p className="font-medium mb-1">Account di test:</p>
-              <p>Email: admin@example.com</p>
-              <p>Password: password123</p>
             </div>
           </form>
         </CardContent>

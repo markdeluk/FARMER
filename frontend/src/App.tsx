@@ -2,6 +2,7 @@ import Layout from "./components/layout"
 import { useAuth } from "./hooks/use-auth"
 import { Spinner } from "./components/spinner"
 import { LoginForm } from "./components/login-form"
+import { RoleBasedContent } from "./components/role-based-content"
 
 function App() {
   const { user, loading, isAuthenticated } = useAuth()
@@ -29,12 +30,17 @@ function App() {
         <h1 className="text-2xl font-bold mb-4">
           Benvenuto, {user?.first_name} {user?.last_name}!
         </h1>
-        <p className="text-gray-600">
-          Ruolo: {user?.role_name}
-        </p>
-        <p className="text-gray-600">
-          Email: {user?.email}
-        </p>
+        <div className="space-y-2 mb-6">
+          <p className="text-gray-600">
+            Email: {user?.email}
+          </p>
+          <p className="text-gray-600">
+            Ruolo: {user?.role_description || user?.role_name}
+          </p>
+        </div>
+        
+        {/* Contenuto basato sui ruoli */}
+        <RoleBasedContent />
       </div>
     </Layout>
   )

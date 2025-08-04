@@ -17,6 +17,15 @@ class UserRole(str, Enum):
     WORKSHOP_HOST = "workshop_host"
     EVENT_ORGANIZER = "event_organizer"
 
+class RoleInfo(BaseModel):
+    """Informazioni complete su un ruolo"""
+    id: int
+    name: str
+    description: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
 class UserLogin(BaseModel):
     email: EmailStr = Field(..., description="Email dell'utente")
     password: str = Field(..., min_length=6, description="Password (minimo 6 caratteri)")
@@ -57,7 +66,9 @@ class UserResponse(BaseModel):
     last_name: str
     phone: str
     is_active: bool
-    role_name: str
+    role_id: int = Field(..., description="ID del ruolo utente")
+    role_name: str = Field(..., description="Nome del ruolo utente") 
+    role_description: Optional[str] = Field(None, description="Descrizione del ruolo utente")
     profile_picture: Optional[bytes] = Field(None, description="Foto profilo dell'utente")
     
     class Config:
