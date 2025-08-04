@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.auth import (
     authenticate_user, create_access_token, get_current_active_user,
-    get_password_hash, ACCESS_TOKEN_EXPIRE_MINUTES
+    get_password_hash
 )
+from app.core.config import settings
 from app.services.user_service import UserService
 from app.models.user import User
 from app.schemas import (
@@ -127,7 +128,7 @@ def login(
         )
     
     # Crea token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
@@ -135,7 +136,7 @@ def login(
     return Token(
         access_token=access_token,
         token_type="bearer",
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # in secondi
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # in secondi
         user=UserResponse(
             id=user.id,
             email=user.email,
@@ -167,7 +168,7 @@ def refresh_token(
     current_user: User = Depends(get_current_active_user)
 ):
     """Rinnova il token di accesso"""
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": str(current_user.id)}, expires_delta=access_token_expires
     )
@@ -175,7 +176,7 @@ def refresh_token(
     return Token(
         access_token=access_token,
         token_type="bearer",
-        expires_in=ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         user=UserResponse(
             id=current_user.id,
             email=current_user.email,

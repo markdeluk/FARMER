@@ -69,6 +69,7 @@ class RoleType(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
+    description = Column(String, nullable=True)
     
     # Relationships
     users = relationship("User", back_populates="role_type")

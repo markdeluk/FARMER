@@ -1,3 +1,5 @@
 test.db
 venv/
 **/__pycache__/
+.env
+*.log

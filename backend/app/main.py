@@ -5,6 +5,7 @@ from fastapi.openapi.utils import get_openapi
 from app.api.routes import api_router
 from app.db.session import engine
 from app.db.base import Base
+from app.core.config import settings
 
 # Configurazione Swagger/OpenAPI avanzata
 def custom_openapi():
@@ -109,14 +110,33 @@ app.openapi = custom_openapi
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Crea le tabelle al primo avvio
-Base.metadata.create_all(bind=engine)
+# Gestione database: ricrea ad ogni avvio in sviluppo
+if settings.RESET_DB_ON_STARTUP:
+    print("Eliminazione database esistente...")
+    Base.metadata.drop_all(bind=engine)
+    
+    print("Ricreazione tabelle...")
+    Base.metadata.create_all(bind=engine)
+    
+    print("Popolazione con dati iniziali...")
+    from app.db.seed import seed_initial_data
+    seed_initial_data()
+    print("Database ricreato e popolato!")
+else:
+    # Crea solo le tabelle se non esistono
+    Base.metadata.create_all(bind=engine)
+    from app.db.seed import seed_initial_data, is_database_empty
+    if is_database_empty():
+        print("🌱 Prima inizializzazione - popolazione database...")
+        seed_initial_data()
+
+print("-" * 60)
 
 # Include tutti i router API
 app.include_router(api_router)

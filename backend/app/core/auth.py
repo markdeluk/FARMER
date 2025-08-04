@@ -1,26 +1,36 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Union
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from typing_extensions import Annotated
+from pydantic import BaseModel, ValidationError
+
 from app.db.session import get_db
 from app.services.user_service import UserService
 from app.models.user import User
-
-# Configurazione JWT
-SECRET_KEY = "your-secret-key-here-change-in-production"  # Cambiare in produzione!
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from app.core.config import settings
 
 # Configurazione password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Security scheme
 security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
 
 user_service = UserService()
+
+class TokenData(BaseModel):
+    """Schema per i dati del token JWT"""
+    user_id: Optional[int] = None
+    email: Optional[str] = None
+
+class Token(BaseModel):
+    """Schema per la risposta del token"""
+    access_token: str
+    token_type: str
 
 class AuthenticationError(HTTPException):
     def __init__(self, detail: str = "Could not validate credentials"):
@@ -49,22 +59,22 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Crea un token JWT"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 def verify_token(token: str) -> dict:
     """Verifica e decodifica un token JWT"""
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id_str: Optional[str] = payload.get("sub")
+        if user_id_str is None:
             raise AuthenticationError()
-        return {"user_id": user_id}
+        return {"user_id": int(user_id_str)}
     except JWTError:
         raise AuthenticationError()
 
@@ -73,31 +83,40 @@ def authenticate_user(db: Session, email: str, password: str) -> Union[User, boo
     user = user_service.get_user_by_email(db, email)
     if not user:
         return False
-    if not verify_password(password, user.password_hash):
+    if not verify_password(password, user.password_hash if isinstance(user.password_hash, str) else getattr(user, "password_hash")):
         return False
     return user
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> User:
-    """Dipendenza per ottenere l'utente corrente dal token"""
-    token_data = verify_token(credentials.credentials)
-    user = user_service.get(db, token_data["user_id"])
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)):
+    """Ottiene l'utente corrente dal token JWT"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        token_data = TokenData(**payload)
+        if token_data.user_id is None:
+            raise credentials_exception
+    except (JWTError, ValidationError):
+        raise credentials_exception
+    
+    user = user_service.get_by_id(db, token_data.user_id)
     if user is None:
-        raise AuthenticationError()
+        raise credentials_exception
     return user
 
 def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """Dipendenza per ottenere l'utente corrente attivo"""
-    if not current_user.is_active:
+    if current_user.is_active is not True:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
 def require_role(required_role: str):
     """Factory per creare dipendenze che richiedono un ruolo specifico"""
     def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
-        if current_user.role.name != required_role:
+        if current_user.role_type.name != required_role:
             raise AuthorizationError(
                 detail=f"Role '{required_role}' required"
             )
@@ -107,7 +126,7 @@ def require_role(required_role: str):
 def require_roles(*required_roles: str):
     """Factory per creare dipendenze che richiedono uno dei ruoli specificati"""
     def roles_checker(current_user: User = Depends(get_current_active_user)) -> User:
-        if current_user.role.name not in required_roles:
+        if current_user.role_type.name not in required_roles:
             raise AuthorizationError(
                 detail=f"One of roles {required_roles} required"
             )
