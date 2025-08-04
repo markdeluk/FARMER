@@ -2,7 +2,6 @@ from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
-from pydantic import BaseModel, EmailStr
 from app.db.session import get_db
 from app.core.auth import (
     authenticate_user, create_access_token, get_current_active_user,
@@ -10,48 +9,54 @@ from app.core.auth import (
 )
 from app.services.user_service import UserService
 from app.models.user import User
+from app.schemas import (
+    UserLogin, UserRegister, UserResponse, Token, 
+    ErrorResponse, SuccessResponse
+)
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter(
+    prefix="/auth", 
+    tags=["🔐 Authentication"],
+    responses={
+        401: {"model": ErrorResponse, "description": "Unauthorized"},
+        422: {"model": ErrorResponse, "description": "Validation Error"}
+    }
+)
 
 user_service = UserService()
 
-# Modelli Pydantic per le richieste
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserRegister(BaseModel):
-    email: EmailStr
-    password: str
-    first_name: str
-    last_name: str
-    phone: str
-    role_id: int
-
-class UserResponse(BaseModel):
-    id: int
-    email: str
-    first_name: str
-    last_name: str
-    phone: str
-    is_active: bool
-    role_name: str
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-    expires_in: int
-    user: UserResponse
-
-class TokenData(BaseModel):
-    user_id: int
-
-@router.post("/register", response_model=UserResponse)
+@router.post(
+    "/register", 
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Registra nuovo utente",
+    description="Crea un nuovo account utente nella piattaforma",
+    responses={
+        201: {"description": "Utente creato con successo"},
+        400: {"description": "Email già in uso"}
+    }
+)
 def register(
     user_data: UserRegister,
     db: Session = Depends(get_db)
 ):
-    """Registra un nuovo utente"""
+    """
+    **Registra un nuovo utente**
+    
+    Crea un nuovo account utente con i seguenti passi:
+    1. Verifica che l'email non sia già utilizzata
+    2. Hash sicuro della password
+    3. Creazione dell'utente nel database
+    4. Ritorna i dati dell'utente (senza password)
+    
+    **Ruoli disponibili:**
+    - 1: admin
+    - 2: farmer  
+    - 3: consumer
+    - 4: restaurant_owner
+    - 5: workshop_host
+    - 6: event_organizer
+    """
     # Verifica se l'utente esiste già
     existing_user = user_service.get_user_by_email(db, user_data.email)
     if existing_user:
@@ -81,12 +86,33 @@ def register(
         role_name=new_user.role.name
     )
 
-@router.post("/login", response_model=Token)
+@router.post(
+    "/login", 
+    response_model=Token,
+    summary="Login utente",
+    description="Autentica un utente e restituisce il token JWT",
+    responses={
+        200: {"description": "Login effettuato con successo"},
+        401: {"description": "Credenziali non valide"}
+    }
+)
 def login(
     user_credentials: UserLogin,
     db: Session = Depends(get_db)
 ):
-    """Login utente"""
+    """
+    **Effettua il login**
+    
+    Autentica l'utente e restituisce:
+    - Token JWT con scadenza (30 minuti)
+    - Informazioni utente
+    - Tipo di token (bearer)
+    
+    **Utilizzare il token negli header:**
+    ```
+    Authorization: Bearer <access_token>
+    ```
+    """
     user = authenticate_user(db, user_credentials.email, user_credentials.password)
     if not user:
         raise HTTPException(

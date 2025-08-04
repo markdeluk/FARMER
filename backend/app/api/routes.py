@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from app.api.controllers import (
     auth_controller,
+    docs_controller,
     base_controller,
     consumer_controller, 
     farmer_controller,
@@ -16,11 +17,17 @@ API_V1_PREFIX = "/api/v1"
 # Router principale che include tutti i controller
 api_router = APIRouter()
 
+# Include il controller di documentazione (senza prefisso API)
+api_router.include_router(
+    docs_controller.router,
+    tags=["📚 Documentation"]
+)
+
 # Include il controller di autenticazione (senza prefisso stakeholder)
 api_router.include_router(
     auth_controller.router,
     prefix=API_V1_PREFIX,
-    tags=["Authentication"]
+    tags=["🔐 Authentication"]
 )
 
 # Include tutti i router dei controller stakeholder
