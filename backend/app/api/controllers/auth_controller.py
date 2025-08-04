@@ -68,13 +68,17 @@ def register(
     # Hash della password
     hashed_password = get_password_hash(user_data.password)
     
-    # Crea l'utente
-    user_dict = user_data.dict()
-    user_dict.pop("password")
-    user_dict["password_hash"] = hashed_password
-    user_dict["is_active"] = True
-    
-    new_user = user_service.create(db, user_dict)
+    # Crea l'utente usando il metodo corretto
+    new_user = user_service.create_user(
+        db=db,
+        email=user_data.email,
+        password_hash=hashed_password,
+        first_name=user_data.first_name,
+        last_name=user_data.last_name,
+        phone=user_data.phone,
+        role_type_id=user_data.role_id,
+        profile_picture=user_data.profile_picture
+    )
     
     return UserResponse(
         id=new_user.id,
@@ -83,7 +87,8 @@ def register(
         last_name=new_user.last_name,
         phone=new_user.phone,
         is_active=new_user.is_active,
-        role_name=new_user.role.name
+        role_name=new_user.role_type.name,
+        profile_picture=new_user.profile_picture
     )
 
 @router.post(

@@ -10,9 +10,21 @@ class UserService(BaseService[User]):
     def __init__(self):
         super().__init__(User)
     
-    def create_user(self, db: Session, name: str, surname: str, role_type_id: int) -> User:
+    def create_user(self, db: Session, email: str, password_hash: str, first_name: str, last_name: str, phone: str, role_type_id: int, profile_picture: Optional[bytes] = None) -> User:
         """Crea un nuovo utente"""
-        return self.create(db, name=name, surname=surname, role_type_id=role_type_id)
+        return self.create(db, email=email, password_hash=password_hash, first_name=first_name, last_name=last_name, phone=phone, role_type_id=role_type_id, profile_picture=profile_picture, is_active=True)
+    
+    def get_user_by_email(self, db: Session, email: str) -> Optional[User]:
+        """Recupera un utente per email"""
+        return db.query(User).filter(User.email == email).first()
+    
+    def update_profile_picture(self, db: Session, user_id: int, profile_picture: bytes) -> Optional[User]:
+        """Aggiorna la foto profilo di un utente"""
+        return self.update(db, user_id, profile_picture=profile_picture)
+    
+    def remove_profile_picture(self, db: Session, user_id: int) -> Optional[User]:
+        """Rimuove la foto profilo di un utente"""
+        return self.update(db, user_id, profile_picture=None)
     
     def get_user_with_relations(self, db: Session, user_id: int) -> Optional[User]:
         """Recupera un utente con tutte le sue relazioni caricate"""
@@ -47,8 +59,8 @@ class UserService(BaseService[User]):
     def search_users_by_name(self, db: Session, search_term: str) -> List[User]:
         """Cerca utenti per nome o cognome"""
         return db.query(User).filter(
-            (User.name.ilike(f"%{search_term}%")) |
-            (User.surname.ilike(f"%{search_term}%"))
+            (User.first_name.ilike(f"%{search_term}%")) |
+            (User.last_name.ilike(f"%{search_term}%"))
         ).all()
 
 # Istanza globale del servizio

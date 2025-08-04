@@ -36,6 +36,7 @@ class UserRegister(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=50, description="Cognome")
     phone: str = Field(..., description="Numero di telefono")
     role_id: int = Field(..., description="ID del ruolo (1=admin, 2=farmer, 3=consumer, etc.)")
+    profile_picture: Optional[bytes] = Field(None, description="Foto profilo dell'utente (opzionale)")
     
     class Config:
         schema_extra = {
@@ -57,6 +58,16 @@ class UserResponse(BaseModel):
     phone: str
     is_active: bool
     role_name: str
+    profile_picture: Optional[bytes] = Field(None, description="Foto profilo dell'utente")
+    
+    class Config:
+        from_attributes = True
+
+class ProfilePictureUpdate(BaseModel):
+    profile_picture: bytes = Field(..., description="Nuova foto profilo dell'utente")
+    
+class ProfilePictureResponse(BaseModel):
+    profile_picture: Optional[bytes] = Field(None, description="Foto profilo dell'utente")
     
     class Config:
         from_attributes = True

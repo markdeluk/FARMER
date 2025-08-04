@@ -8,7 +8,8 @@ from app.api.controllers import (
     restaurant_owner_controller,
     admin_controller,
     workshop_host_controller,
-    event_organizer_controller
+    event_organizer_controller,
+    user_controller
 )
 
 # Costante per il prefisso API
@@ -65,4 +66,11 @@ api_router.include_router(
     event_organizer_controller.router,
     prefix=API_V1_PREFIX,
     tags=["Event Organizer"]
+)
+
+# Include il controller utenti
+api_router.include_router(
+    user_controller.router,
+    prefix=API_V1_PREFIX,
+    tags=["👤 User Management"]
 )
