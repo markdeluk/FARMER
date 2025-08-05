@@ -45,6 +45,7 @@ class UserRegister(BaseModel):
     last_name: str = Field(..., min_length=2, max_length=50, description="Cognome")
     phone: str = Field(..., description="Numero di telefono")
     role_id: int = Field(..., description="ID del ruolo (1=admin, 2=farmer, 3=consumer, etc.)")
+    language: str = Field(default="it", description="Lingua preferita (it/en)")
     profile_picture: Optional[bytes] = Field(None, description="Foto profilo dell'utente (opzionale)")
     
     class Config:
@@ -66,6 +67,7 @@ class UserResponse(BaseModel):
     last_name: str
     phone: str
     is_active: bool
+    language: str = Field(default="it", description="Lingua preferita dell'utente (it/en)")
     role_id: int = Field(..., description="ID del ruolo utente")
     role_name: str = Field(..., description="Nome del ruolo utente") 
     role_description: Optional[str] = Field(None, description="Descrizione del ruolo utente")
@@ -82,6 +84,16 @@ class ProfilePictureResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class LanguageUpdate(BaseModel):
+    language: str = Field(..., description="Nuova lingua preferita (it/en)")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "language": "en"
+            }
+        }
 
 class Token(BaseModel):
     access_token: str = Field(..., description="Token JWT per l'autenticazione")

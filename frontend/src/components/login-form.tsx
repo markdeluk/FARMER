@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
+import { useTranslation } from "@/lib/i18n"
 
 export function LoginForm({
   className,
@@ -20,7 +21,8 @@ export function LoginForm({
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const { login } = useAuth()
+  const { login, user } = useAuth()
+  const { t } = useTranslation(user?.language)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +31,7 @@ export function LoginForm({
 
     const success = await login(email, password)
     if (!success) {
-      setError("Email o password non corretti")
+      setError(t("errors.invalidCredentials"))
     }
 
     setIsLoading(false)
@@ -39,9 +41,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+          <CardTitle>{t("loginToAccount")}</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            {t("enterEmailToLogin")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -53,11 +55,11 @@ export function LoginForm({
                 </div>
               )}
               <div className="grid gap-3">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder={t("emailPlaceholder")}
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -66,13 +68,13 @@ export function LoginForm({
               </div>
               <div className="grid gap-3">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                  <a
-                    href="#"
+                  <Label htmlFor="password">{t("password")}</Label>
+                  <button
+                    type="button"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
-                    Forgot your password?
-                  </a>
+                    {t("forgotPassword")}
+                  </button>
                 </div>
                 <Input 
                   id="password" 
@@ -85,15 +87,18 @@ export function LoginForm({
               </div>
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Logging in..." : "Login"}
+                  {isLoading ? t("loggingIn") : t("login")}
                 </Button>
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="#" className="underline underline-offset-4">
-                Sign up
-              </a>
+              {t("dontHaveAccount")}{" "}
+              <button
+                type="button"
+                className="underline underline-offset-4"
+              >
+                {t("signUp")}
+              </button>
             </div>
           </form>
         </CardContent>

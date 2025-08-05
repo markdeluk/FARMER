@@ -2,6 +2,14 @@
  * Tipi e enums condivisi nell'applicazione frontend
  */
 
+// Enum per le lingue supportate
+export const Language = {
+  IT: "it",
+  EN: "en"
+} as const
+
+export type Language = (typeof Language)[keyof typeof Language]
+
 // Enum per i ruoli utente - deve corrispondere al backend
 export const UserRole = {
   ADMIN: "admin",
@@ -13,25 +21,24 @@ export const UserRole = {
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
-
-// Mappa per le descrizioni dei ruoli (per la UI)
+// Map for role descriptions (for the UI)
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
-  [UserRole.ADMIN]: "Amministratore del sistema con accesso completo",
-  [UserRole.FARMER]: "Produttore agricolo che vende direttamente i propri prodotti",
-  [UserRole.CONSUMER]: "Utente finale che acquista prodotti dal mercato agricolo",
-  [UserRole.RESTAURANT_OWNER]: "Proprietario di ristorante che acquista ingredienti freschi",
-  [UserRole.WORKSHOP_HOST]: "Organizzatore di workshop ed eventi educativi",
-  [UserRole.EVENT_ORGANIZER]: "Organizzatore di eventi e manifestazioni del mercato"
+    [UserRole.ADMIN]: "System administrator with full access",
+    [UserRole.FARMER]: "Agricultural producer selling their own products directly",
+    [UserRole.CONSUMER]: "End user purchasing products from the farmers' market",
+    [UserRole.RESTAURANT_OWNER]: "Restaurant owner buying fresh ingredients",
+    [UserRole.WORKSHOP_HOST]: "Host of workshops and educational events",
+    [UserRole.EVENT_ORGANIZER]: "Organizer of market events and activities"
 }
 
-// Mappa per i nomi visualizzati dei ruoli (versione italiana user-friendly)
+// Map for user-friendly display names of roles (English version)
 export const ROLE_DISPLAY_NAMES: Record<UserRole, string> = {
-  [UserRole.ADMIN]: "Amministratore",
-  [UserRole.FARMER]: "Agricoltore",
-  [UserRole.CONSUMER]: "Consumatore",
-  [UserRole.RESTAURANT_OWNER]: "Proprietario Ristorante",
-  [UserRole.WORKSHOP_HOST]: "Organizzatore Workshop",
-  [UserRole.EVENT_ORGANIZER]: "Organizzatore Eventi"
+    [UserRole.ADMIN]: "Administrator",
+    [UserRole.FARMER]: "Farmer",
+    [UserRole.CONSUMER]: "Consumer",
+    [UserRole.RESTAURANT_OWNER]: "Restaurant Owner",
+    [UserRole.WORKSHOP_HOST]: "Workshop Host",
+    [UserRole.EVENT_ORGANIZER]: "Event Organizer"
 }
 
 // Tipo per le informazioni utente dal backend
@@ -42,6 +49,7 @@ export interface User {
   last_name: string
   phone: string
   is_active: boolean
+  language: Language
   role_id: number
   role_name: UserRole
   role_description?: string
@@ -70,6 +78,7 @@ export interface RegisterData {
   last_name: string
   phone: string
   role_id: number
+  language: Language
 }
 
 // Funzioni utility per i ruoli

@@ -5,9 +5,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={true}>
       <AppSidebar />
-      <main>
-        <SidebarTrigger />
-        {children}
+      <main className="flex-1">
+        <header className="flex items-center p-4 border-b">
+          <SidebarTrigger />
+        </header>
+        <div className="p-6">
+          {children}
+        </div>
       </main>
     </SidebarProvider>
   )

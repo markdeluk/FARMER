@@ -96,19 +96,47 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: Session 
     )
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        token_data = TokenData(**payload)
-        if token_data.user_id is None:
+        user_id_str: Optional[str] = payload.get("sub")
+        if user_id_str is None:
             raise credentials_exception
-    except (JWTError, ValidationError):
+        user_id = int(user_id_str)
+    except (JWTError, ValueError):
         raise credentials_exception
     
-    user = user_service.get_by_id(db, token_data.user_id)
+    user = user_service.get_by_id(db, user_id)
+    if user is None:
+        raise credentials_exception
+    return user
+
+def get_current_user_bearer(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)):
+    """Ottiene l'utente corrente dal token JWT usando HTTPBearer"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(credentials.credentials, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id_str: Optional[str] = payload.get("sub")
+        if user_id_str is None:
+            raise credentials_exception
+        user_id = int(user_id_str)
+    except (JWTError, ValueError):
+        raise credentials_exception
+    
+    user = user_service.get_by_id(db, user_id)
     if user is None:
         raise credentials_exception
     return user
 
 def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """Dipendenza per ottenere l'utente corrente attivo"""
+    if current_user.is_active is not True:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+def get_current_active_user_bearer(current_user: User = Depends(get_current_user_bearer)) -> User:
+    """Dipendenza per ottenere l'utente corrente attivo usando HTTPBearer"""
     if current_user.is_active is not True:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user

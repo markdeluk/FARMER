@@ -14,6 +14,7 @@ class User(Base):
     phone = Column(String, nullable=True)
     profile_picture = Column(LargeBinary, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    language = Column(String, default="it", nullable=False)  # Lingua preferita: 'it' o 'en'
     role_type_id = Column(Integer, ForeignKey("role_types.id"), nullable=False)
     
     # Relationships

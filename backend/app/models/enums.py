@@ -63,6 +63,11 @@ class CropTypeEnum(PyEnum):
     CHERRY_TOMATOES = "cherry tomatoes"
 
 
+class LanguageEnum(PyEnum):
+    ITALIAN = "it"
+    ENGLISH = "en"
+
+
 # Database tables for enums
 class RoleType(Base):
     __tablename__ = "role_types"

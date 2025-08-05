@@ -1,4 +1,4 @@
-import { Calendar, HelpCircle, Home, Inbox, Search, Settings } from "lucide-react"
+import { Calendar, HelpCircle, Home, Inbox, Search, User } from "lucide-react"
 
 import {
   Sidebar,
@@ -12,53 +12,57 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { NavUser } from "./mine/nav-user"
-import { NavSecondary } from "./mine/nav-secondary"
 import { useAuth } from "@/hooks/use-auth"
-
-// Menu items.
-const items = [
-  {
-    title: "Home",
-    url: "#",
-    icon: Home,
-  },
-  {
-    title: "Inbox",
-    url: "#",
-    icon: Inbox,
-  },
-  {
-    title: "Calendar",
-    url: "#",
-    icon: Calendar,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-]
-
-const navSecondary = [
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-  {
-    title: "Get Help",
-    url: "#",
-    icon: HelpCircle,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: Search,
-  },
-]
+import { useRouter } from "@/hooks/use-router"
+import { useTranslation } from "@/lib/i18n"
 
 export function AppSidebar() {
   const { user, isAuthenticated } = useAuth()
+  const { navigate, currentRoute } = useRouter()
+  const { t } = useTranslation(user?.language)
+
+  // Menu items con traduzioni
+  const items = [
+    {
+      title: t("home"),
+      route: 'home' as const,
+      icon: Home,
+    },
+    {
+      title: t("inbox"),
+      route: 'home' as const, // placeholder
+      icon: Inbox,
+    },
+    {
+      title: t("calendar"),
+      route: 'home' as const, // placeholder
+      icon: Calendar,
+    },
+    {
+      title: t("search"),
+      route: 'home' as const, // placeholder
+      icon: Search,
+    },
+  ]
+
+  const navSecondary = [
+    {
+      title: t("profile"),
+      route: 'profile' as const,
+      icon: User,
+    },
+    {
+      title: t("getHelp"),
+      route: 'home' as const, // placeholder
+      icon: HelpCircle,
+    },
+  ]
+
+  const handleNavigation = (route: 'home' | 'profile') => {
+    console.log('Sidebar: Button clicked, navigating to:', route)
+    navigate(route)
+    console.log('Sidebar: Navigate function called')
+  }
 
   // Se l'utente non è autenticato, mostra dati di default
   const displayUser = isAuthenticated && user ? {
@@ -66,7 +70,7 @@ export function AppSidebar() {
     email: user.email,
     avatar: user.profile_picture ? `data:image/jpeg;base64,${user.profile_picture}` : `https://api.dicebear.com/7.x/initials/svg?seed=${user.first_name}%20${user.last_name}`,
   } : {
-    name: "Guest User",
+    name: t("guestUser"),
     email: "guest@example.com", 
     avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Guest%20User",
   }
@@ -75,27 +79,47 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Application</SidebarGroupLabel>
+          <SidebarGroupLabel>{t("application")}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <a href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </a>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation(item.route)}
+                    isActive={currentRoute === item.route}
+                    className="cursor-pointer"
+                  >
+                    <item.icon />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navSecondary.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation(item.route)}
+                    isActive={currentRoute === item.route}
+                    className="cursor-pointer"
+                  >
+                    <item.icon />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
-        <SidebarFooter>
-          <NavUser user={displayUser} />
-        </SidebarFooter>
+      <SidebarFooter>
+        <NavUser user={displayUser} />
+      </SidebarFooter>
     </Sidebar>
   )
 }

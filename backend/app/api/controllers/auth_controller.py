@@ -5,14 +5,14 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.auth import (
     authenticate_user, create_access_token, get_current_active_user,
-    get_password_hash
+    get_current_active_user_bearer, get_password_hash
 )
 from app.core.config import settings
 from app.services.user_service import UserService
 from app.models.user import User
 from app.schemas import (
     UserLogin, UserRegister, UserResponse, Token, 
-    ErrorResponse, SuccessResponse
+    ErrorResponse, SuccessResponse, LanguageUpdate
 )
 
 router = APIRouter(
@@ -78,6 +78,7 @@ def register(
         last_name=user_data.last_name,
         phone=user_data.phone,
         role_type_id=user_data.role_id,
+        language=user_data.language,
         profile_picture=user_data.profile_picture
     )
     
@@ -88,6 +89,7 @@ def register(
         last_name=new_user.last_name,
         phone=new_user.phone,
         is_active=new_user.is_active,
+        language=new_user.language,
         role_id=new_user.role_type_id,
         role_name=new_user.role_type.name,
         role_description=new_user.role_type.description,
@@ -146,6 +148,7 @@ def login(
             last_name=user.last_name,
             phone=user.phone,
             is_active=user.is_active,
+            language=user.language,
             role_id=user.role_type_id,
             role_name=user.role_type.name,
             role_description=user.role_type.description,
@@ -165,6 +168,7 @@ def get_current_user_info(
         last_name=current_user.last_name,
         phone=current_user.phone,
         is_active=current_user.is_active,
+        language=current_user.language,
         role_id=current_user.role_type_id,
         role_name=current_user.role_type.name,
         role_description=current_user.role_type.description,
@@ -192,6 +196,7 @@ def refresh_token(
             last_name=current_user.last_name,
             phone=current_user.phone,
             is_active=current_user.is_active,
+            language=current_user.language,
             role_id=current_user.role_type_id,
             role_name=current_user.role_type.name,
             role_description=current_user.role_type.description,
@@ -235,3 +240,39 @@ def test_farmer_access(
             detail="Farmer role required"
         )
     return {"message": "Farmer access granted", "user": current_user.email}
+
+@router.put("/language", response_model=UserResponse)
+def update_user_language(
+    language_data: LanguageUpdate,
+    current_user: User = Depends(get_current_active_user_bearer),
+    db: Session = Depends(get_db)
+):
+    """Aggiorna la lingua preferita dell'utente"""
+    # Valida la lingua
+    if language_data.language not in ["it", "en"]:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Language must be 'it' or 'en'"
+        )
+    
+    # Aggiorna la lingua
+    updated_user = user_service.update_language(db, current_user.id, language_data.language)
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return UserResponse(
+        id=updated_user.id,
+        email=updated_user.email,
+        first_name=updated_user.first_name,
+        last_name=updated_user.last_name,
+        phone=updated_user.phone,
+        is_active=updated_user.is_active,
+        language=updated_user.language,
+        role_id=updated_user.role_type_id,
+        role_name=updated_user.role_type.name,
+        role_description=updated_user.role_type.description,
+        profile_picture=updated_user.profile_picture
+    )
